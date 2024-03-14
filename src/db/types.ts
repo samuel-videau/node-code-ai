@@ -1,5 +1,5 @@
 export enum DATABASE_TABLE {
-    USER = 'user',
+    USER = '"user"',
     WORKFLOW = 'workflow',
     ACTION = 'action',
     LLM_ACTION = 'llm_action'
