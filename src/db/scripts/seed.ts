@@ -69,9 +69,35 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "jobId" INTEGER NOT NULL,
       "name" VARCHAR(255) NOT NULL,
       "order" INTEGER NOT NULL,
-      "specificActionType" INTEGER NOT NULL,
+      "specificActionType" VARCHAR(255) NOT NULL,
       "createdAt" TIMESTAMPTZ DEFAULT NOW(),
       FOREIGN KEY ("jobId") REFERENCES ${DATABASE_TABLE.WORKFLOW}("id") ON DELETE CASCADE
+    )
+  `);
+
+  // Create ActionInput table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.ACTION_INPUT} (
+      "id" SERIAL PRIMARY KEY,
+      "actionId" INTEGER NOT NULL,
+      "valueFromInputId" INTEGER,
+      "name" VARCHAR(255),
+      "type" VARCHAR(255) NOT NULL,
+      "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+      FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE,
+      FOREIGN KEY ("valueFromInputId") REFERENCES ${DATABASE_TABLE.ACTION_INPUT}("id"),
+    )
+  `);
+
+  // Create ActionOutput table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.ACTION_OUTPUT} (
+      "id" SERIAL PRIMARY KEY,
+      "actionId" INTEGER NOT NULL,
+      "name" VARCHAR(255) NOT NULL,
+      "type" VARCHAR(255) NOT NULL,
+      "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+      FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE
     )
   `);
 
@@ -84,7 +110,6 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "assistant" VARCHAR(255),
       "system" VARCHAR(255),
       "user" VARCHAR(255),
-      "responseType" VARCHAR(255) NOT NULL,
       "frequencyPenalty" FLOAT,
       "presencePenalty" FLOAT,
       "maxTokens" INTEGER,

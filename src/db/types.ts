@@ -2,6 +2,8 @@ export enum DATABASE_TABLE {
     USER = '"user"',
     WORKFLOW = 'workflow',
     ACTION = 'action',
+    ACTION_INPUT = 'action_input',
+    ACTION_OUTPUT = 'action_output',
     LLM_ACTION = 'llm_action'
 }
 
@@ -26,11 +28,26 @@ export interface Action {
     jobId: number;
     name: string;
     order: number;
-    specificActionType: number;
+    specificActionType: string;
     createdAt: Date;
 }
 
-type JsonObject = { [key: string]: string | number | boolean | JsonObject | JsonObject[] };
+export interface ActionInput {
+    id: number;
+    actionId: number;
+    valueFromInputId: number | null;
+    name: string | null;
+    type: string;
+    createdAt: Date;
+}
+
+export interface ActionOutput {
+    id: number;
+    actionId: number;
+    name: string;
+    type: string;
+    createdAt: Date;
+}
 
 export interface LlmAction {
     id: number;
@@ -39,7 +56,6 @@ export interface LlmAction {
     assistant?: string;
     system?: string;
     user?: string;
-    responseType: string;
     frequencyPenalty: number | null;
     presencePenalty: number | null;
     maxTokens: number | null;

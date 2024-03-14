@@ -5,7 +5,7 @@ import winston from 'winston';
 import { EnvService } from 'src/env/env.service';
 import { ENV_VAR } from 'src/env/types';
 import { DebugLogger } from 'src/decorators/debug-logging.decorator';
-import { Action, LlmAction, User, Workflow } from './types';
+import { Action, ActionInput, ActionOutput, LlmAction, User, Workflow } from './types';
 
 
 @Injectable()
@@ -106,6 +106,59 @@ export class DbService implements OnModuleDestroy {
     await this.client.query(`UPDATE action SET "order" = $1 WHERE id = $2`, [order, id]);
   }
 
+  @DebugLogger()
+  public async insertActionInput(actionId: number, valueFromInputId: number | null, name: string | null, type: string): Promise<void> {
+    await this.client.query(`
+      INSERT INTO action_input (actionId, valueFromInputId, name, type)
+      VALUES ($1, $2, $3, $4)
+    `, [actionId, valueFromInputId, name, type]);
+  }
+
+  @DebugLogger()
+  public async getActionInputByActionId(actionId: number): Promise<ActionInput[]> {
+    const result = await this.client.query(`SELECT * FROM action_input WHERE actionId = $1`, [actionId]);
+    return result.rows as ActionInput[];
+  }
+
+  @DebugLogger()
+  public async updateActionInput(id: number, valueFromInputId: number | null, name: string | null, type: string): Promise<void> {
+    await this.client.query(`
+      UPDATE action_input SET valueFromInputId = $2, name = $3, type = $4 WHERE id = $1
+    `, [id, valueFromInputId, name, type]);
+  }
+
+  @DebugLogger()
+  public async deleteActionInput(id: number): Promise<void> {
+    await this.client.query(`DELETE FROM action_input WHERE id = $1`, [id]);
+  }
+
+  // ActionOutput CRUD Operations
+  @DebugLogger()
+  public async insertActionOutput(actionId: number, name: string, type: string): Promise<void> {
+    await this.client.query(`
+      INSERT INTO action_output (actionId, name, type)
+      VALUES ($1, $2, $3)
+    `, [actionId, name, type]);
+  }
+
+  @DebugLogger()
+  public async getActionOutputByActionId(actionId: number): Promise<ActionOutput[]> {
+    const result = await this.client.query(`SELECT * FROM action_output WHERE actionId = $1`, [actionId]);
+    return result.rows as ActionOutput[];
+  }
+
+  @DebugLogger()
+  public async updateActionOutput(id: number, name: string, type: string): Promise<void> {
+    await this.client.query(`
+      UPDATE action_output SET name = $2, type = $3 WHERE id = $1
+    `, [id, name, type]);
+  }
+
+  @DebugLogger()
+  public async deleteActionOutput(id: number): Promise<void> {
+    await this.client.query(`DELETE FROM action_output WHERE id = $1`, [id]);
+  }
+
   // Delete an action by ID
   @DebugLogger()
   public async deleteAction(id: number): Promise<void> {
@@ -114,11 +167,11 @@ export class DbService implements OnModuleDestroy {
 
   // Insert a new LLM action
   @DebugLogger()
-  public async insertLlmAction(actionId: number, model: string, assistant: string, system: string, user: string, responseType: string, frequencyPenalty: number, presencePenalty: number, maxTokens: number, n: number, seed: number, temperature: number, topP: number): Promise<void> {
+  public async insertLlmAction(actionId: number, model: string, assistant: string, system: string, user: string, frequencyPenalty: number, presencePenalty: number, maxTokens: number, n: number, seed: number, temperature: number, topP: number): Promise<void> {
     await this.client.query(`
-      INSERT INTO llm_action (actionId, model, assistant, system, user, responseType, frequencyPenalty, presencePenalty, maxTokens, n, seed, temperature, topP)
-      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13)
-    `, [actionId, model, assistant, system, user, responseType, frequencyPenalty, presencePenalty, maxTokens, n, seed, temperature, topP]);
+      INSERT INTO llm_action (actionId, model, assistant, system, user, frequencyPenalty, presencePenalty, maxTokens, n, seed, temperature, topP)
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)
+    `, [actionId, model, assistant, system, user, frequencyPenalty, presencePenalty, maxTokens, n, seed, temperature, topP]);
   }
 
   // Get LLM actions by Action ID
