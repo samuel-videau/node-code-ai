@@ -10,6 +10,7 @@ import { UpdateWorkflowDto } from 'src/workflow/dto/update-workflow.dto';
 import { UpdateActionDto } from 'src/workflow/action/dto/update-action.dto';
 import { UpdateActionInputDto } from 'src/workflow/action/input/dto/update-input.dto';
 import { UpdateOutputDto } from 'src/workflow/action/output/dto/update-output.dto';
+import { UpdateLlmActionDto } from 'src/workflow/action/llm-action/dto/update-llm-action.dto';
 
 
 @Injectable()
@@ -251,9 +252,20 @@ public async updateAction(id: number, updateActionDto: UpdateActionDto): Promise
 
   // Update an LLM action's model
   @DebugLogger()
-  public async updateLlmActionModel(id: number, model: string): Promise<void> {
-    await this.client.query(`UPDATE ${DATABASE_TABLE.LLM_ACTION} SET model = $1 WHERE id = $2`, [model, id]);
+  public async updateLlmAction(id: number, updateDto: UpdateLlmActionDto): Promise<void> {
+    const entries = Object.entries(updateDto);
+    const setClause = entries
+      .map(([key, _], index) => `"${key}" = $${index + 2}`)
+      .join(', ');
+    const queryParams = [id, ...entries.map(([, value]) => value)];
+
+    if (setClause) {
+      await this.client.query(`
+        UPDATE ${DATABASE_TABLE.LLM_ACTION} SET ${setClause} WHERE id = $1
+      `, queryParams);
+    }
   }
+
 
   // Delete an LLM action by ID
   @DebugLogger()
