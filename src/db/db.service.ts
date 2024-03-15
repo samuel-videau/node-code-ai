@@ -9,6 +9,7 @@ import { Action, ActionInput, ActionOutput, DATABASE_TABLE, LlmAction, User, Wor
 import { UpdateWorkflowDto } from 'src/workflow/dto/update-workflow.dto';
 import { UpdateActionDto } from 'src/workflow/action/dto/update-action.dto';
 import { UpdateActionInputDto } from 'src/workflow/action/input/dto/update-input.dto';
+import { UpdateOutputDto } from 'src/workflow/action/output/dto/update-output.dto';
 
 
 @Injectable()
@@ -211,10 +212,20 @@ public async updateAction(id: number, updateActionDto: UpdateActionDto): Promise
   }
 
   @DebugLogger()
-  public async updateActionOutput(id: number, name: string, type: string): Promise<void> {
-    await this.client.query(`
-      UPDATE ${DATABASE_TABLE.ACTION_OUTPUT} SET name = $2, type = $3 WHERE id = $1
-    `, [id, name, type]);
+  public async updateActionOutput(id: number, updateDto: UpdateOutputDto): Promise<void> {
+    // Construct the SQL SET clause dynamically based on the DTO's properties
+    const entries = Object.entries(updateDto);
+    const setClauseParts = entries.map(([key, _], index) => `"${key}" = $${index + 2}`);
+    const setClause = setClauseParts.join(', ');
+
+    // Ensure the dynamic parts are correctly applied to the query
+    if (setClause) {
+      const queryParams = [id, ...entries.map(([, value]) => value)];
+
+      await this.client.query(`
+        UPDATE ${DATABASE_TABLE.ACTION_OUTPUT} SET ${setClause} WHERE id = $1
+      `, queryParams);
+    }
   }
 
   @DebugLogger()
