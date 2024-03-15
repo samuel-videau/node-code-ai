@@ -1,0 +1,25 @@
+# Use a Node base image
+FROM node:21
+
+WORKDIR /app
+
+# Optionally install git
+RUN apt update -y && apt install -y git
+
+# Copy package.json and yarn.lock (or package-lock.json)
+COPY package.json yarn.lock ./
+
+# Install dependencies including devDependencies
+RUN yarn install
+
+# Copy the rest of your source code
+COPY . .
+
+# Set environment to development
+ENV NODE_ENV development
+
+# Expose the port your app runs on
+EXPOSE 3000
+
+# Start the application in watch mode with NestJS CLI
+CMD ["yarn", "start:dev"]

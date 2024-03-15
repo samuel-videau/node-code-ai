@@ -1,4 +1,4 @@
-FROM node:18.16.1-bookworm-slim as build
+FROM node:21-alpine as build
 
 WORKDIR /app
 
@@ -20,7 +20,7 @@ RUN yarn run build
 # Remove devDependencies
 RUN yarn install --prod --ignore-scripts --prefer-offline
 
-FROM node:18.16.1-bookworm-slim
+FROM node:21-alpine
 
 USER node
 

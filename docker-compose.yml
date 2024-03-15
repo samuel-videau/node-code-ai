@@ -4,17 +4,20 @@ services:
   app:
     build:
       context: .
-      dockerfile: Dockerfile
+      dockerfile: Dockerfile.dev  # Ensure this file exists and is configured for development
+    volumes:
+      - .:/app  # Match the WORKDIR in Dockerfile.dev
+      - /app/node_modules  # Exclude node_modules from the volume to use the container's version
     ports:
-      - "3000:3000" # Assuming your app runs on port 3000, adjust if necessary
+      - "3000:3000"
     environment:
-      - NODE_ENV=production
-      - POSTGRES_URI=postgresql://postgres:password@db:5432/myappdb # Adjust as needed
+      - NODE_ENV=development
+      - POSTGRES_URI=postgresql://postgres:password@db:5432/myappdb
     depends_on:
       - db
-
+  
   db:
-    image: postgres:13 # You can use any version of Postgres that suits your requirements
+    image: postgres:13
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
@@ -22,7 +25,7 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: password
     ports:
-      - "5432:5432" # Optional: only needed if you want to access the DB from outside
+      - "5432:5432"
 
 volumes:
   postgres_data:
