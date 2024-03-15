@@ -29,7 +29,7 @@ export interface Workflow {
 
 export interface Action {
     id: number;
-    jobId: number;
+    workflowId: number;
     name: string;
     order: number;
     specificActionType: string;

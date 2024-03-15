@@ -7,6 +7,7 @@ import { ENV_VAR } from 'src/env/types';
 import { DebugLogger } from 'src/decorators/debug-logging.decorator';
 import { Action, ActionInput, ActionOutput, DATABASE_TABLE, LlmAction, User, Workflow } from './types';
 import { UpdateWorkflowDto } from 'src/workflow/dto/update-workflow.dto';
+import { UpdateActionDto } from 'src/workflow/action/dto/update-action.dto';
 
 
 @Injectable()
@@ -89,7 +90,7 @@ export class DbService implements OnModuleDestroy {
   @DebugLogger()
   public async updateWorkflow(id: number, updateFields: UpdateWorkflowDto): Promise<void> {
     // Construct the SET part of the SQL query dynamically based on the updateFields object
-    const setQuery = Object.keys(updateFields).filter(key => key !== 'authorId')
+    const setQuery = Object.keys(updateFields)
       .map((key, index) => `"${key}" = $${index + 1}`)
       .join(', ');
     
@@ -111,25 +112,46 @@ export class DbService implements OnModuleDestroy {
 
   // Insert a new action
   @DebugLogger()
-  public async insertAction(jobId: number, name: string, order: number, specificActionType: number): Promise<void> {
+  public async insertAction(workflowId: number, name: string, order: number, specificActionType: string): Promise<void> {
     await this.client.query(`
-      INSERT INTO ${DATABASE_TABLE.ACTION} (jobId, name, "order", specificActionType)
+      INSERT INTO ${DATABASE_TABLE.ACTION} ("workflowId", name, "order", "specificActionType")
       VALUES ($1, $2, $3, $4)
-    `, [jobId, name, order, specificActionType]);
+    `, [workflowId, name, order, specificActionType]);
+  }
+
+  @DebugLogger()
+  public async getActionById(id: number): Promise<Action | null> {
+    const result = await this.client.query(`SELECT * FROM ${DATABASE_TABLE.ACTION} WHERE id = $1`, [id]);
+    if (result.rowCount === 0) return null;
+    return result.rows[0] as Action;
   }
 
   // Get actions by Job ID
   @DebugLogger()
-  public async getActionsByJobId(jobId: number): Promise<Action[]> {
-    const result = await this.client.query(`SELECT * FROM ${DATABASE_TABLE.ACTION} WHERE "jobId" = $1`, [jobId]);
+  public async getActionsByWorkflowId(workflowId: number): Promise<Action[]> {
+    const result = await this.client.query(`SELECT * FROM ${DATABASE_TABLE.ACTION} WHERE "workflowId" = $1`, [workflowId]);
     return result.rows as Action[];
   }
 
   // Update an action's order
   @DebugLogger()
-  public async updateActionOrder(id: number, order: number): Promise<void> {
-    await this.client.query(`UPDATE ${DATABASE_TABLE.ACTION} SET "order" = $1 WHERE id = $2`, [order, id]);
-  }
+public async updateAction(id: number, updateActionDto: UpdateActionDto): Promise<void> {
+  // Construct the SET part of the SQL query dynamically based on the updateActionDto object
+  const setQueryParts = [];
+  const queryParams = [];
+
+  Object.keys(updateActionDto).forEach((key, index) => {
+    setQueryParts.push(`"${key}" = $${index + 1}`);
+    queryParams.push(updateActionDto[key]);
+  });
+
+  queryParams.push(id); // Add the id as the last parameter for the WHERE clause
+
+  const setQuery = setQueryParts.join(', ');
+  const query = `UPDATE ${DATABASE_TABLE.ACTION} SET ${setQuery} WHERE id = $${queryParams.length}`;
+
+  await this.client.query(query, queryParams);
+}
 
   // Delete an action by ID
   @DebugLogger()

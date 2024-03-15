@@ -66,12 +66,12 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.ACTION} (
       "id" SERIAL PRIMARY KEY,
-      "jobId" INTEGER NOT NULL,
+      "workflowId" INTEGER NOT NULL,
       "name" VARCHAR(255) NOT NULL,
       "order" INTEGER NOT NULL,
       "specificActionType" VARCHAR(255) NOT NULL,
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      FOREIGN KEY ("jobId") REFERENCES ${DATABASE_TABLE.WORKFLOW}("id") ON DELETE CASCADE
+      FOREIGN KEY ("workflowId") REFERENCES ${DATABASE_TABLE.WORKFLOW}("id") ON DELETE CASCADE
     )
   `);
 
