@@ -56,8 +56,8 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "authorId" INTEGER NOT NULL,
       "status" INTEGER NOT NULL,
       "public" BOOLEAN NOT NULL DEFAULT FALSE,
-      "createdAt" TIMESTAMPTZ DEFAULT NOW(),
-      "updatedAt" TIMESTAMPTZ DEFAULT NOW(),
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       FOREIGN KEY ("authorId") REFERENCES ${DATABASE_TABLE.USER}("id")
     )
   `);
@@ -70,7 +70,7 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "name" VARCHAR(255) NOT NULL,
       "order" INTEGER NOT NULL,
       "specificActionType" VARCHAR(255) NOT NULL,
-      "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       FOREIGN KEY ("jobId") REFERENCES ${DATABASE_TABLE.WORKFLOW}("id") ON DELETE CASCADE
     )
   `);
@@ -83,9 +83,9 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "valueFromInputId" INTEGER,
       "name" VARCHAR(255),
       "type" VARCHAR(255) NOT NULL,
-      "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE,
-      FOREIGN KEY ("valueFromInputId") REFERENCES ${DATABASE_TABLE.ACTION_INPUT}("id"),
+      FOREIGN KEY ("valueFromInputId") REFERENCES ${DATABASE_TABLE.ACTION_INPUT}("id")
     )
   `);
 
@@ -96,7 +96,7 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "actionId" INTEGER NOT NULL,
       "name" VARCHAR(255) NOT NULL,
       "type" VARCHAR(255) NOT NULL,
-      "createdAt" TIMESTAMPTZ DEFAULT NOW(),
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE
     )
   `);

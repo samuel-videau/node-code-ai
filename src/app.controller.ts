@@ -1,5 +1,6 @@
 import { Body, Controller, Get, Post } from '@nestjs/common';
 import { AppService } from './app.service';
+import { User } from './db/types';
 
 @Controller()
 export class AppController {
@@ -15,14 +16,8 @@ export class AppController {
     await this.appService.createUser(email);
   }
 
-  @Post('workflow')
-  async createWorkflow(
-    @Body('name') name: string,
-    @Body('description') description: string,
-    @Body('authorId') authorId: number,
-    @Body('status') status: number,
-    @Body('isPublic') isPublic: boolean,
-  ): Promise<void> {
-    await this.appService.createWorkflow(name, description, authorId, status, isPublic);
+  @Get('users')
+  async getUsers(): Promise<User[]> {
+    return this.appService.getUsers();
   }
 }

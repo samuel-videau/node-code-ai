@@ -19,6 +19,10 @@ export interface User {
 export interface Workflow {
     id: number;
     name: string;
+    description: string;
+    authorId: number;
+    status: number;
+    public: boolean;
     createdAt: Date;
     updatedAt: Date;
 }

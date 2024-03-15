@@ -1,5 +1,6 @@
 import { Injectable } from '@nestjs/common';
 import { DbService } from './db/db.service';
+import { User } from './db/types';
 
 @Injectable()
 export class AppService {
@@ -13,5 +14,9 @@ export class AppService {
 
   async createUser(email: string): Promise<void> {
     await this.dbService.insertUser(email);
+  }
+
+  async getUsers(): Promise<User[]> {
+    return this.dbService.getUsers();
   }
 }
