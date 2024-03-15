@@ -80,12 +80,12 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
     CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.ACTION_INPUT} (
       "id" SERIAL PRIMARY KEY,
       "actionId" INTEGER NOT NULL,
-      "valueFromInputId" INTEGER,
+      "valueFromOutputId" INTEGER,
       "name" VARCHAR(255),
       "type" VARCHAR(255) NOT NULL,
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE,
-      FOREIGN KEY ("valueFromInputId") REFERENCES ${DATABASE_TABLE.ACTION_INPUT}("id")
+      FOREIGN KEY ("valueFromOutputId") REFERENCES ${DATABASE_TABLE.ACTION_INPUT}("id")
     )
   `);
 

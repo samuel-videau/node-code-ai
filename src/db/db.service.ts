@@ -8,6 +8,7 @@ import { DebugLogger } from 'src/decorators/debug-logging.decorator';
 import { Action, ActionInput, ActionOutput, DATABASE_TABLE, LlmAction, User, Workflow } from './types';
 import { UpdateWorkflowDto } from 'src/workflow/dto/update-workflow.dto';
 import { UpdateActionDto } from 'src/workflow/action/dto/update-action.dto';
+import { UpdateActionInputDto } from 'src/workflow/action/input/dto/update-input.dto';
 
 
 @Injectable()
@@ -160,11 +161,11 @@ public async updateAction(id: number, updateActionDto: UpdateActionDto): Promise
   }
 
   @DebugLogger()
-  public async insertActionInput(actionId: number, valueFromInputId: number | null, name: string | null, type: string): Promise<void> {
+  public async insertActionInput(actionId: number, valueFromOutputId: number | null, name: string | null, type: string): Promise<void> {
     await this.client.query(`
-      INSERT INTO ${DATABASE_TABLE.ACTION_INPUT} (actionId, valueFromInputId, name, type)
+      INSERT INTO ${DATABASE_TABLE.ACTION_INPUT} (actionId, valueFromOutputId, name, type)
       VALUES ($1, $2, $3, $4)
-    `, [actionId, valueFromInputId, name, type]);
+    `, [actionId, valueFromOutputId, name, type]);
   }
 
   @DebugLogger()
@@ -174,10 +175,19 @@ public async updateAction(id: number, updateActionDto: UpdateActionDto): Promise
   }
 
   @DebugLogger()
-  public async updateActionInput(id: number, valueFromInputId: number | null, name: string | null, type: string): Promise<void> {
+  public async updateActionInput(id: number, updateDto: UpdateActionInputDto): Promise<void> {
+    // Construct the SQL SET clause dynamically based on the DTO's properties
+    const entries = Object.entries(updateDto);
+    const setClause = entries
+      .map(([key, _], index) => `"${key}" = $${index + 2}`)
+      .join(', ');
+
+    // The first query parameter is the ID, followed by the DTO's values
+    const queryParams = [id, ...entries.map(([, value]) => value)];
+
     await this.client.query(`
-      UPDATE ${DATABASE_TABLE.ACTION_INPUT} SET valueFromInputId = $2, name = $3, type = $4 WHERE id = $1
-    `, [id, valueFromInputId, name, type]);
+      UPDATE ${DATABASE_TABLE.ACTION_INPUT} SET ${setClause} WHERE id = $1
+    `, queryParams);
   }
 
   @DebugLogger()

@@ -39,7 +39,7 @@ export interface Action {
 export interface ActionInput {
     id: number;
     actionId: number;
-    valueFromInputId: number | null;
+    valueFromOutputId: number | null;
     name: string | null;
     type: string;
     createdAt: Date;
