@@ -1,7 +1,7 @@
 import { config } from 'dotenv';
 import {Client} from 'pg';
 
-import { DATABASE_TABLE } from '../types';
+import { DATABASE_TABLE, DATABASE_TYPE } from '../types';
 
 config();
 const POSTGRES_URI = process.env.POSTGRES_URI;
@@ -32,9 +32,43 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
   if (dropTables) {
     for (const table of Object.keys(DATABASE_TABLE).values())
       await client.query(`DROP TABLE IF EXISTS ${DATABASE_TABLE[table]} CASCADE`);
+    for (const type of Object.keys(DATABASE_TYPE).values())
+      await client.query(`DROP TYPE IF EXISTS ${DATABASE_TYPE[type]}`);
   }
 
   console.log('Creating tables...');
+
+  try {
+    await client.query(`
+      CREATE TYPE ${DATABASE_TYPE.CONDITION_TYPE} AS ENUM (
+        'EQUALS',
+        'NOT_EQUALS',
+        'GREATER_THAN',
+        'LESS_THAN',
+        'GREATER_THAN_OR_EQUAL',
+        'LESS_THAN_OR_EQUAL',
+        'CONTAINS',
+        'NOT_CONTAINS'
+        );
+    `);
+  } catch (err) {
+    if (err.message.includes('already exists')) {
+      console.log('User table already exists');
+    } else throw err;
+  }
+
+  try {
+    await client.query(`
+      CREATE TYPE ${DATABASE_TYPE.ACTION_TYPE} AS ENUM (
+        'HTTP',
+        'LLM'
+      );
+    `);
+  } catch (err) {
+    if (err.message.includes('already exists')) {
+      console.log('User table already exists');
+    } else throw err;
+  }
 
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.USER} (
@@ -46,6 +80,8 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "updatedAt" TIMESTAMPTZ DEFAULT NOW()
     )
   `);
+  
+  
 
   // Create Workflow table
   // Status 0: Draft, 1: Published
@@ -70,12 +106,45 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "id" SERIAL PRIMARY KEY,
       "workflowId" INTEGER NOT NULL,
       "name" VARCHAR(255) NOT NULL,
-      "order" INTEGER NOT NULL,
-      "specificActionType" VARCHAR(255) NOT NULL,
+      "specificActionType" ${DATABASE_TYPE.ACTION_TYPE} NOT NULL,
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       FOREIGN KEY ("workflowId") REFERENCES ${DATABASE_TABLE.WORKFLOW}("id") ON DELETE CASCADE
     )
   `);
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.DEPENDENCY} (
+      id SERIAL PRIMARY KEY,
+      precedingActionId INTEGER NOT NULL,
+      succeedingActionId INTEGER NOT NULL,
+      createdAt TIMESTAMPTZ NOT NULL DEFAULT 'NOW()',
+      FOREIGN KEY (precedingActionId) REFERENCES ACTION(id),
+      FOREIGN KEY (succeedingActionId) REFERENCES ACTION(id)
+    );
+  `);  
+
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.CONDITIONAL_DEPENDENCY} (
+      id SERIAL PRIMARY KEY,
+      precedingActionId INTEGER NOT NULL,
+      successActionId INTEGER,
+      failureActionId INTEGER,
+      conditionType ${DATABASE_TYPE.CONDITION_TYPE} NOT NULL,
+      valueAType VARCHAR(255) NOT NULL, -- literal (string number etc) or input or output
+      valueAId INTEGER,
+      valueALiteral TEXT,
+      valueBType VARCHAR(255) NOT NULL, -- literal (string number etc) or input or output
+      valueBId INTEGER,
+      valueBLiteral TEXT,
+      createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      FOREIGN KEY (precedingActionId) REFERENCES ACTION(id),
+      FOREIGN KEY (successActionId) REFERENCES ACTION(id),
+      FOREIGN KEY (failureActionId) REFERENCES ACTION(id)
+    );
+  `);
+
+
+  
 
   // Create ActionInput table
   await client.query(`
@@ -83,11 +152,12 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "id" SERIAL PRIMARY KEY,
       "actionId" INTEGER NOT NULL,
       "valueFromOutputId" INTEGER,
-      "name" VARCHAR(255),
+      "name" VARCHAR(255) NOT NULL,
       "type" VARCHAR(255) NOT NULL,
+      "description" TEXT,
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE,
-      FOREIGN KEY ("valueFromOutputId") REFERENCES ${DATABASE_TABLE.ACTION_INPUT}("id")
+      FOREIGN KEY ("valueFromOutputId") REFERENCES ${DATABASE_TABLE.ACTION_OUTPUT}("id")
     )
   `);
 
@@ -96,8 +166,9 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
     CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.ACTION_OUTPUT} (
       "id" SERIAL PRIMARY KEY,
       "actionId" INTEGER NOT NULL,
-      "name" VARCHAR(255) NOT NULL,
+      "name" VARCHAR(255),
       "type" VARCHAR(255) NOT NULL,
+      "description" TEXT,
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE
     )

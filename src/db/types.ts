@@ -2,9 +2,16 @@ export enum DATABASE_TABLE {
     USER = '"user"',
     WORKFLOW = 'workflow',
     ACTION = 'action',
+    DEPENDENCY = 'dependency',
+    CONDITIONAL_DEPENDENCY = 'conditional_dependency',
     ACTION_INPUT = 'action_input',
     ACTION_OUTPUT = 'action_output',
     LLM_ACTION = 'llm_action'
+}
+
+export enum DATABASE_TYPE {
+    CONDITION_TYPE = 'condition_type',
+    ACTION_TYPE = 'action_type'
 }
 
 export interface User {
