@@ -68,11 +68,11 @@ export class DbService implements OnModuleDestroy {
 
     // Insert a new workflow
   @DebugLogger()
-  public async insertWorkflow(name: string, description: string, authorId: number, status: number, isPublic: boolean): Promise<void> {
+  public async insertWorkflow(name: string, description: string, authorId: number, isPublic: boolean): Promise<void> {
     await this.client.query(`
-      INSERT INTO ${DATABASE_TABLE.WORKFLOW} (name, description, "authorId", status, "public")
-      VALUES ($1, $2, $3, $4, $5)
-    `, [name, description, authorId, status, isPublic]);
+      INSERT INTO ${DATABASE_TABLE.WORKFLOW} (name, description, "authorId", "public")
+      VALUES ($1, $2, $3, $4)
+    `, [name, description, authorId, isPublic]);
   }
 
   // Get a workflow by ID

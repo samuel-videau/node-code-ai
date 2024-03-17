@@ -13,7 +13,6 @@ export class WorkflowService {
       createWorkflowDto.name,
       createWorkflowDto.description,
       createWorkflowDto.authorId,
-      createWorkflowDto.status,
       createWorkflowDto.isPublic,
     );
   }

@@ -48,16 +48,18 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
   `);
 
   // Create Workflow table
+  // Status 0: Draft, 1: Published
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.WORKFLOW} (
       "id" SERIAL PRIMARY KEY,
       "name" VARCHAR(255) NOT NULL,
       "description" TEXT,
       "authorId" INTEGER NOT NULL,
-      "status" INTEGER NOT NULL,
+      "status" INTEGER NOT NULL DEFAULT 0,
       "public" BOOLEAN NOT NULL DEFAULT FALSE,
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       "updatedAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      CHECK (status BETWEEN 0 AND 1),
       FOREIGN KEY ("authorId") REFERENCES ${DATABASE_TABLE.USER}("id")
     )
   `);
@@ -117,6 +119,9 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "seed" FLOAT,
       "temperature" FLOAT NOT NULL DEFAULT 1,
       "topP" FLOAT NOT NULL DEFAULT 1,
+      CHECK ("frequencyPenalty" BETWEEN -2 AND 2),
+      CHECK ("presencePenalty" BETWEEN -2 AND 2),
+      CHECK (temperature BETWEEN 0 AND 2),
       FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE
     )
   `);

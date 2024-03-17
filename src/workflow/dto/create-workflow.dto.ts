@@ -12,9 +12,6 @@ export class CreateWorkflowDto {
   @Min(1)
   authorId: number;
 
-  @IsInt()
-  status: number;
-
   @IsBoolean()
   isPublic: boolean;
 }
