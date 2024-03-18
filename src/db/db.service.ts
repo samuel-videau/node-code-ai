@@ -5,7 +5,7 @@ import winston from 'winston';
 import { EnvService } from 'src/env/env.service';
 import { ENV_VAR } from 'src/env/types';
 import { DebugLogger } from 'src/decorators/debug-logging.decorator';
-import { Action, ActionInput, ActionOutput, DATABASE_TABLE, LlmAction, User, Workflow } from './types';
+import { Action, ActionInput, ActionOutput, ConditionalDependency, DATABASE_TABLE, Dependency, LlmAction, User, Workflow } from './types';
 import { UpdateWorkflowDto } from 'src/workflow/dto/update-workflow.dto';
 import { UpdateActionDto } from 'src/workflow/action/dto/update-action.dto';
 import { UpdateActionInputDto } from 'src/workflow/action/input/dto/update-input.dto';
@@ -272,4 +272,62 @@ public async updateAction(id: number, updateActionDto: UpdateActionDto): Promise
   public async deleteLlmAction(id: number): Promise<void> {
     await this.client.query(`DELETE FROM ${DATABASE_TABLE.LLM_ACTION} WHERE id = $1`, [id]);
   }
+
+  @DebugLogger()
+  public async insertDependency(workflowId: number, precedingActionId: number, succeedingActionId: number): Promise<void> {
+    await this.client.query(`
+      INSERT INTO ${DATABASE_TABLE.DEPENDENCY} ("workflowId", "precedingActionId", "succeedingActionId")
+      VALUES ($1, $2, $3)
+    `, [workflowId ,precedingActionId, succeedingActionId]);
+  }
+
+  @DebugLogger()
+  public async getDependencies(workflowId: number): Promise<Dependency[]> {
+    const result = await this.client.query(`SELECT * FROM ${DATABASE_TABLE.DEPENDENCY} WHERE "workflowId" = $1`, [workflowId]);
+    return result.rows;
+  }
+
+  @DebugLogger()
+  public async deleteDependency(id: number): Promise<void> {
+    await this.client.query(`DELETE FROM ${DATABASE_TABLE.DEPENDENCY} WHERE id = $1`, [id]);
+  }
+
+  @DebugLogger()
+  public async insertConditionalDependency(cDependency: ConditionalDependency): Promise<void> {
+    await this.client.query(`
+      INSERT INTO ${DATABASE_TABLE.CONDITIONAL_DEPENDENCY} ("workflowId", "precedingActionId", "successActionId", "failureActionId", "conditionType", "valueAType", "valueAId", "valueALiteral", "valueBType", "valueBId", "valueBLiteral")
+      VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
+    `, [
+        cDependency.workflowId,
+        cDependency.precedingActionId, 
+        cDependency.successActionId, 
+        cDependency.failureActionId, 
+        cDependency.conditionType, 
+        cDependency.valueAType, 
+        cDependency.valueAId, 
+        cDependency.valueALiteral, 
+        cDependency.valueBType, 
+        cDependency.valueBId, 
+        cDependency.valueBLiteral
+      ]);
+  }
+
+  @DebugLogger()
+  public async getConditionalDependencies(workflowId: number): Promise<ConditionalDependency[]> {
+    const result = await this.client.query(`SELECT * FROM ${DATABASE_TABLE.CONDITIONAL_DEPENDENCY} WHERE "workflowId" = $1`, [workflowId]);
+    return result.rows as ConditionalDependency[];
+  }
+
+  @DebugLogger()
+  public async getConditionalDependencyFromPredecessor(precedingActionId: number): Promise<ConditionalDependency | null> {
+    const result = await this.client.query(`SELECT * FROM ${DATABASE_TABLE.CONDITIONAL_DEPENDENCY} WHERE "precedingActionId" = $1`, [precedingActionId]);
+    if (result.rowCount === 0) return null;
+    return result.rows[0] as ConditionalDependency;
+  }
+
+  @DebugLogger()
+  public async deleteConditionalDependency(id: number): Promise<void> {
+    await this.client.query(`DELETE FROM ${DATABASE_TABLE.CONDITIONAL_DEPENDENCY} WHERE id = $1`, [id]);
+  }
+
 }

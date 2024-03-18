@@ -115,50 +115,36 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.DEPENDENCY} (
       id SERIAL PRIMARY KEY,
-      precedingActionId INTEGER NOT NULL,
-      succeedingActionId INTEGER NOT NULL,
-      createdAt TIMESTAMPTZ NOT NULL DEFAULT 'NOW()',
-      FOREIGN KEY (precedingActionId) REFERENCES ACTION(id),
-      FOREIGN KEY (succeedingActionId) REFERENCES ACTION(id)
+      "workflowId" INTEGER NOT NULL,
+      "precedingActionId" INTEGER NOT NULL,
+      "succeedingActionId" INTEGER NOT NULL,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT 'NOW()',
+      FOREIGN KEY ("workflowId") REFERENCES ${DATABASE_TABLE.WORKFLOW}(id),
+      FOREIGN KEY ("precedingActionId") REFERENCES ${DATABASE_TABLE.ACTION}(id),
+      FOREIGN KEY ("succeedingActionId") REFERENCES ${DATABASE_TABLE.ACTION}(id)
     );
   `);  
 
   await client.query(`
     CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.CONDITIONAL_DEPENDENCY} (
       id SERIAL PRIMARY KEY,
-      precedingActionId INTEGER NOT NULL,
-      successActionId INTEGER,
-      failureActionId INTEGER,
-      conditionType ${DATABASE_TYPE.CONDITION_TYPE} NOT NULL,
-      valueAType VARCHAR(255) NOT NULL, -- literal (string number etc) or input or output
-      valueAId INTEGER,
-      valueALiteral TEXT,
-      valueBType VARCHAR(255) NOT NULL, -- literal (string number etc) or input or output
-      valueBId INTEGER,
-      valueBLiteral TEXT,
-      createdAt TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      FOREIGN KEY (precedingActionId) REFERENCES ACTION(id),
-      FOREIGN KEY (successActionId) REFERENCES ACTION(id),
-      FOREIGN KEY (failureActionId) REFERENCES ACTION(id)
-    );
-  `);
-
-
-  
-
-  // Create ActionInput table
-  await client.query(`
-    CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.ACTION_INPUT} (
-      "id" SERIAL PRIMARY KEY,
-      "actionId" INTEGER NOT NULL,
-      "valueFromOutputId" INTEGER,
-      "name" VARCHAR(255) NOT NULL,
-      "type" VARCHAR(255) NOT NULL,
-      "description" TEXT,
+      "workflowId" INTEGER NOT NULL,
+      "precedingActionId" INTEGER NOT NULL,
+      "successActionId" INTEGER,
+      "failureActionId" INTEGER,
+      "conditionType" ${DATABASE_TYPE.CONDITION_TYPE} NOT NULL,
+      "valueAType" VARCHAR(255) NOT NULL, -- literal (string number etc) or input or output
+      "valueAId" INTEGER,
+      "valueALiteral" TEXT,
+      "valueBType" VARCHAR(255) NOT NULL, -- literal (string number etc) or input or output
+      "valueBId" INTEGER,
+      "valueBLiteral" TEXT,
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-      FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE,
-      FOREIGN KEY ("valueFromOutputId") REFERENCES ${DATABASE_TABLE.ACTION_OUTPUT}("id")
-    )
+      FOREIGN KEY ("workflowId") REFERENCES ${DATABASE_TABLE.WORKFLOW}(id),
+      FOREIGN KEY ("precedingActionId") REFERENCES ${DATABASE_TABLE.ACTION}(id),
+      FOREIGN KEY ("successActionId") REFERENCES ${DATABASE_TABLE.ACTION}(id),
+      FOREIGN KEY ("failureActionId") REFERENCES ${DATABASE_TABLE.ACTION}(id)
+    );
   `);
 
   // Create ActionOutput table
@@ -171,6 +157,21 @@ export const seedDb = async (dropTables?: boolean): Promise<void> => {
       "description" TEXT,
       "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE
+    )
+  `);
+  
+  // Create ActionInput table
+  await client.query(`
+    CREATE TABLE IF NOT EXISTS ${DATABASE_TABLE.ACTION_INPUT} (
+      "id" SERIAL PRIMARY KEY,
+      "actionId" INTEGER NOT NULL,
+      "valueFromOutputId" INTEGER,
+      "name" VARCHAR(255) NOT NULL,
+      "type" VARCHAR(255) NOT NULL,
+      "description" TEXT,
+      "createdAt" TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+      FOREIGN KEY ("actionId") REFERENCES ${DATABASE_TABLE.ACTION}("id") ON DELETE CASCADE,
+      FOREIGN KEY ("valueFromOutputId") REFERENCES ${DATABASE_TABLE.ACTION_OUTPUT}("id")
     )
   `);
 
